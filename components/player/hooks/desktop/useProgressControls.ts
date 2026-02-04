@@ -108,7 +108,29 @@ export function useProgressControls({
             document.removeEventListener('touchend', handleTouchEnd);
             document.removeEventListener('touchcancel', handleTouchEnd);
         };
-    }, [duration, isDraggingProgressRef, progressBarRef, videoRef, setCurrentTime]);
+    }, [duration, isDraggingProgressRef, progressBarRef, videoRef, setCurrentTime, getEventPos]);
+
+    // Attach touchstart with passive: false to allow preventDefault (React uses passive by default)
+    useEffect(() => {
+        const progressBar = progressBarRef.current;
+        if (!progressBar) return;
+
+        const handleNativeTouchStart = (e: TouchEvent) => {
+            e.preventDefault();
+            isDraggingProgressRef.current = true;
+            if (!videoRef.current) return;
+            const rect = progressBar.getBoundingClientRect();
+            const pos = getEventPos(e, rect);
+            const newTime = pos * duration;
+            lastDragTimeRef.current = newTime;
+            setCurrentTime(newTime);
+        };
+
+        progressBar.addEventListener('touchstart', handleNativeTouchStart, { passive: false });
+        return () => {
+            progressBar.removeEventListener('touchstart', handleNativeTouchStart);
+        };
+    }, [progressBarRef, videoRef, isDraggingProgressRef, duration, setCurrentTime, getEventPos]);
 
     const progressActions = useMemo(() => ({
         handleProgressClick,

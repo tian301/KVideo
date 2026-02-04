@@ -47,6 +47,21 @@
     overflow: visible;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none;
+    /* Prevent page scrolling during drag */
+    -webkit-touch-callout: none;
+    /* Prevent iOS callout */
+}
+
+/* Increase touch target area for mobile */
+.slider-track::before {
+    content: '';
+    position: absolute;
+    top: -16px;
+    left: 0;
+    right: 0;
+    bottom: -16px;
+    z-index: 1;
 }
 
 .slider-track.h-1 {
