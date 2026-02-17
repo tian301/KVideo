@@ -2,11 +2,14 @@
 
 /**
  * IPTVChannelGrid - Displays IPTV channels grouped by category with search
+ * Uses pagination to handle large playlists without freezing.
  */
 
 import { useState, useMemo } from 'react';
 import { Icons } from '@/components/ui/Icon';
 import type { M3UChannel } from '@/lib/utils/m3u-parser';
+
+const PAGE_SIZE = 100;
 
 interface IPTVChannelGridProps {
   channels: M3UChannel[];
@@ -18,6 +21,7 @@ interface IPTVChannelGridProps {
 export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel }: IPTVChannelGridProps) {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const filteredChannels = useMemo(() => {
     let result = channels;
@@ -33,6 +37,17 @@ export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel }: I
 
     return result;
   }, [channels, selectedGroup, search]);
+
+  // Reset visible count when filter changes
+  const filterKey = `${selectedGroup}-${search}`;
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    setVisibleCount(PAGE_SIZE);
+  }
+
+  const visibleChannels = filteredChannels.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredChannels.length;
 
   if (channels.length === 0) {
     return (
@@ -58,6 +73,13 @@ export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel }: I
             className="w-full pl-9 pr-3 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] text-sm text-[var(--text-color)] placeholder:text-[var(--text-color-secondary)]/50 focus:outline-none focus:border-[var(--accent-color)]"
           />
         </div>
+      </div>
+
+      {/* Channel count */}
+      <div className="text-xs text-[var(--text-color-secondary)]">
+        {filteredChannels.length === channels.length
+          ? `共 ${channels.length} 个频道`
+          : `${filteredChannels.length} / ${channels.length} 个频道`}
       </div>
 
       {/* Group Tabs */}
@@ -94,7 +116,7 @@ export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel }: I
 
       {/* Channel Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-        {filteredChannels.map((channel, index) => (
+        {visibleChannels.map((channel, index) => (
           <button
             key={`${channel.name}-${index}`}
             onClick={() => onSelect(channel)}
@@ -139,6 +161,18 @@ export function IPTVChannelGrid({ channels, groups, onSelect, activeChannel }: I
           </button>
         ))}
       </div>
+
+      {/* Load More */}
+      {hasMore && (
+        <div className="text-center py-4">
+          <button
+            onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+            className="px-6 py-2 text-xs bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] hover:border-[var(--accent-color)]/30 transition-all cursor-pointer"
+          >
+            加载更多 ({filteredChannels.length - visibleCount} 个剩余)
+          </button>
+        </div>
+      )}
 
       {filteredChannels.length === 0 && (
         <div className="text-center py-8 text-sm text-[var(--text-color-secondary)]">

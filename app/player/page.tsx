@@ -97,10 +97,20 @@ function PlayerContent() {
     return sources;
   }, [groupedSourcesParam, source, videoId, videoData?.vod_pic, discoveredSources]);
 
-  // Background fetch alternative sources when none provided
+  // Background fetch alternative sources when none provided or when existing ones lack full info
   const fetchedSourcesRef = useRef(false);
   useEffect(() => {
-    if (groupedSourcesParam || fetchedSourcesRef.current || !title) return;
+    if (fetchedSourcesRef.current || !title) return;
+
+    // Check if existing grouped sources already have full info (pic + latency)
+    let existingSources: SourceInfo[] = [];
+    if (groupedSourcesParam) {
+      try { existingSources = JSON.parse(groupedSourcesParam); } catch {}
+    }
+    const hasFullInfo = existingSources.length > 1 &&
+      existingSources.every(s => s.pic || s.latency !== undefined);
+    if (hasFullInfo) return;
+
     fetchedSourcesRef.current = true;
 
     const settings = settingsStore.getSettings();
@@ -334,12 +344,17 @@ function PlayerContent() {
                       params.set('id', String(newSource.id));
                       params.set('source', newSource.source);
                       params.set('title', title || '');
+                      // Preserve current episode index
+                      params.set('episode', currentEpisode.toString());
                       // Pass all known sources so switching persists
                       const allSources = groupedSources.length > 0 ? groupedSources : [];
                       if (allSources.length > 1) {
                         params.set('groupedSources', JSON.stringify(allSources));
                       } else if (groupedSourcesParam) {
                         params.set('groupedSources', groupedSourcesParam);
+                      }
+                      if (isPremium) {
+                        params.set('premium', '1');
                       }
                       setCurrentSourceId(newSource.source);
                       router.replace(`/player?${params.toString()}`, { scroll: false });

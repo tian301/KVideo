@@ -24,6 +24,7 @@ interface IPTVState {
 interface IPTVActions {
   addSource: (name: string, url: string) => void;
   removeSource: (id: string) => void;
+  updateSource: (id: string, updates: Partial<Pick<IPTVSource, 'name' | 'url'>>) => void;
   refreshSources: () => Promise<void>;
   setLoading: (loading: boolean) => void;
 }
@@ -31,6 +32,7 @@ interface IPTVActions {
 interface IPTVStore extends IPTVState, IPTVActions {}
 
 const MAX_CONCURRENT = 3;
+const MAX_CHANNELS = 5000; // Safety limit to prevent UI freeze
 
 async function fetchWithConcurrencyLimit<T>(
   tasks: (() => Promise<T>)[],
@@ -73,6 +75,14 @@ export const useIPTVStore = create<IPTVStore>()(
         }));
       },
 
+      updateSource: (id, updates) => {
+        set((state) => ({
+          sources: state.sources.map((s) =>
+            s.id === id ? { ...s, ...updates } : s
+          ),
+        }));
+      },
+
       refreshSources: async () => {
         const { sources } = get();
         if (sources.length === 0) {
@@ -101,8 +111,13 @@ export const useIPTVStore = create<IPTVStore>()(
 
           await fetchWithConcurrencyLimit(tasks, MAX_CONCURRENT);
 
+          // Limit total channels for performance
+          const finalChannels = allChannels.length > MAX_CHANNELS
+            ? allChannels.slice(0, MAX_CHANNELS)
+            : allChannels;
+
           set({
-            cachedChannels: allChannels,
+            cachedChannels: finalChannels,
             cachedGroups: Array.from(allGroups).sort(),
             lastRefreshed: Date.now(),
             isLoading: false,
@@ -118,9 +133,9 @@ export const useIPTVStore = create<IPTVStore>()(
       name: 'kvideo-iptv-store',
       partialize: (state) => ({
         sources: state.sources,
-        cachedChannels: state.cachedChannels,
-        cachedGroups: state.cachedGroups,
         lastRefreshed: state.lastRefreshed,
+        // Don't persist cachedChannels/cachedGroups - they can be very large
+        // and will be re-fetched on page load
       }),
     }
   )
