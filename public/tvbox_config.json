@@ -1,0 +1,44 @@
+{
+  "sites": [
+    {
+      "key": "bingchatv",
+      "name": "冰茶TV（直播）",
+      "type": "4",
+      "api": "https://188766.xyz/itv",
+      "playUrl": "https://056dd119.kvideo-9ak.pages.dev/api/proxy?url=",
+      "jar": true
+    },
+    {
+      "key": "360ys",
+      "name": "360影视",
+      "type": "3",
+      "api": "https://360zyzz.com/api.php/provide/vod",
+      "playUrl": "https://056dd119.kvideo-9ak.pages.dev/api/proxy?url=",
+      "jar": true
+    },
+    {
+      "key": "baofengys",
+      "name": "暴风影视",
+      "type": "3",
+      "api": "http://by.bfzyapi.com/api.php/provide/vod",
+      "playUrl": "https://056dd119.kvideo-9ak.pages.dev/api/proxy?url=",
+      "jar": true
+    },
+    {
+      "key": "maoyanys",
+      "name": "猫眼影视",
+      "type": "3",
+      "api": "https://api.maoyanapi.top/api.php/provide/vod",
+      "playUrl": "https://056dd119.kvideo-9ak.pages.dev/api/proxy?url=",
+      "jar": true
+    },
+    {
+      "key": "ffys",
+      "name": "非凡影视",
+      "type": "3",
+      "api": "https://cj.ffzyapi.com/api.php/provide/vod",
+      "playUrl": "https://056dd119.kvideo-9ak.pages.dev/api/proxy?url=",
+      "jar": true
+    }
+  ]
+}
